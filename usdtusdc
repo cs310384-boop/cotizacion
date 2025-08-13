@@ -1,0 +1,43 @@
+import requests
+import datetime
+
+def get_p2p_price(asset, fiat):
+    url = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
+    payload = {
+        "asset": asset,
+        "fiat": fiat,
+        "tradeType": "BUY",
+        "page": 1,
+        "rows": 5,
+        "payTypes": [],
+        "publisherType": None
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    r = requests.post(url, json=payload, headers=headers)
+    data = r.json()["data"]
+    prices = [float(ad["adv"]["price"]) for ad in data]
+    return sum(prices) / len(prices) if prices else None
+
+def main():
+    usdt_price = get_p2p_price("USDT", "BOB")
+    usdc_price = get_p2p_price("USDC", "BOB")
+
+    data = [{
+        "timestamp": datetime.datetime.utcnow().isoformat(),
+        "usdt_bob": usdt_price,
+        "usdc_bob": usdc_price
+    }]
+
+    pbi_url = "https://api.powerbi.com/beta/a7703f70-840a-490c-848e-5a199758a45f/datasets/f202a878-b7bc-47e3-b794-ffc2967d213e/rows?redirectedFromSignup=1%2C1&experience=power-bi&key=3ych740vTp705Q1Ks%2BCIuShO7t1Za%2Fo%2Fv271CGlfDK%2BJl8nSoox0GapI8oQwFvfhLTTN7aEdctmw4abJ7dRvdg%3D%3D"
+
+    response = requests.post(pbi_url, json=data)
+
+    if response.status_code == 200:
+        print("✅ Datos enviados correctamente:", data)
+    else:
+        print("❌ Error:", response.status_code, response.text)
+
+if __name__ == "__main__":
+    main()
